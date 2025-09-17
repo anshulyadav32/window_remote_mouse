@@ -149,8 +149,9 @@ class _RemoteMouseHomePageState extends State<RemoteMouseHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Remote Mouse Server'),
+        title: Text('Remote Mouse & Media Control'),
         backgroundColor: Colors.blue,
+        elevation: 0,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -231,7 +232,13 @@ class _RemoteMouseHomePageState extends State<RemoteMouseHomePage> {
                 'Instructions:\n'
                 '1. Connect your phone to the same WiFi network\n'
                 '2. Scan the QR code or visit: $_serverUrl\n'
-                '3. Use your phone as a remote mouse!',
+                '3. Use your phone as a remote control!\n\n'
+                'Features:\n'
+                '🖱️ Mouse Control - Move cursor and click\n'
+                '🎵 Media Control - Play/pause, volume, seek\n'
+                '🌐 Browser Control - Navigation and tabs\n'
+                '🪟 Window Management - Alt+Tab, minimize, etc.\n'
+                '⌨️ Text Input - Send text to computer',
                 style: Theme.of(context).textTheme.bodyMedium,
                 textAlign: TextAlign.center,
               ),

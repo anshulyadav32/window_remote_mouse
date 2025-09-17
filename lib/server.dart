@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'mouse.dart';
+import 'keyboard.dart';
 import 'web_client.dart';
 
 class RemoteMouseServer {
@@ -74,6 +75,93 @@ class RemoteMouseServer {
       case 'wheel':
         final delta = _toInt(msg['delta']) ?? 0;
         MouseController.wheel(delta);
+        break;
+        
+      // Media controls
+      case 'media_play_pause':
+        KeyboardController.playPause();
+        break;
+      case 'media_stop':
+        KeyboardController.stop();
+        break;
+      case 'media_next':
+        KeyboardController.nextTrack();
+        break;
+      case 'media_previous':
+        KeyboardController.previousTrack();
+        break;
+      case 'volume_up':
+        KeyboardController.volumeUp();
+        break;
+      case 'volume_down':
+        KeyboardController.volumeDown();
+        break;
+      case 'volume_mute':
+        KeyboardController.mute();
+        break;
+      case 'space':
+        KeyboardController.spaceBar();
+        break;
+      case 'seek_forward':
+        KeyboardController.seekForward();
+        break;
+      case 'seek_backward':
+        KeyboardController.seekBackward();
+        break;
+        
+      // Browser controls
+      case 'browser_back':
+        KeyboardController.browserBack();
+        break;
+      case 'browser_forward':
+        KeyboardController.browserForward();
+        break;
+      case 'browser_refresh':
+        KeyboardController.browserRefresh();
+        break;
+      case 'browser_home':
+        KeyboardController.browserHome();
+        break;
+      case 'browser_search':
+        KeyboardController.browserSearch();
+        break;
+      case 'browser_favorites':
+        KeyboardController.browserFavorites();
+        break;
+      case 'next_tab':
+        KeyboardController.nextTab();
+        break;
+      case 'previous_tab':
+        KeyboardController.previousTab();
+        break;
+      case 'close_tab':
+        KeyboardController.closeTab();
+        break;
+      case 'new_tab':
+        KeyboardController.newTab();
+        break;
+        
+      // Window management
+      case 'alt_tab':
+        KeyboardController.altTab();
+        break;
+      case 'minimize_window':
+        KeyboardController.minimizeWindow();
+        break;
+      case 'maximize_window':
+        KeyboardController.maximizeWindow();
+        break;
+      case 'close_window':
+        KeyboardController.closeWindow();
+        break;
+      case 'toggle_fullscreen':
+        KeyboardController.toggleFullscreen();
+        break;
+        
+      // Text input
+      case 'send_text':
+        final text = msg['text'] as String? ?? '';
+        KeyboardController.sendText(text);
         break;
         
       default:
