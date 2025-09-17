@@ -1,0 +1,18 @@
+name: remote_mouse_server
+description: Remote Mouse Flutter server for Windows
+publish_to: "none"
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  win32: ^5.14.0
+  qr_flutter: ^4.1.0
+
+dev_dependencies:
+  test: ^1.25.2
+
+flutter:
+  uses-material-design: true
