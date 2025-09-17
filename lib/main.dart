@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:win32/win32.dart';
 import 'server.dart';
 
 void main() {
@@ -31,6 +32,7 @@ class _RemoteMouseHomePageState extends State<RemoteMouseHomePage> {
   bool _isRunning = false;
   String _serverUrl = '';
   final String _token = 'SECURE_TOKEN_${DateTime.now().millisecondsSinceEpoch}';
+  bool _minimizeOnConnect = true;
 
   Future<String> _getLocalIP() async {
     try {
@@ -112,10 +114,29 @@ class _RemoteMouseHomePageState extends State<RemoteMouseHomePage> {
     return false;
   }
 
+  void _minimizeToBackground() {
+    try {
+      // Get the current window handle
+      final hwnd = GetActiveWindow();
+      if (hwnd != 0) {
+        // Minimize the window
+        ShowWindow(hwnd, SW_MINIMIZE);
+        print('🪟 Window minimized to background');
+      }
+    } catch (e) {
+      print('❌ Error minimizing window: $e');
+    }
+  }
+
   Future<void> _startServer() async {
     try {
       final ip = await _getLocalIP();
-      _server = RemoteMouseServer(host: '0.0.0.0', port: 8765, token: _token);
+      _server = RemoteMouseServer(
+        host: '0.0.0.0', 
+        port: 8765, 
+        token: _token,
+        onClientConnected: _minimizeOnConnect ? _minimizeToBackground : null,
+      );
       await _server!.start();
       
       setState(() {
@@ -193,6 +214,32 @@ class _RemoteMouseHomePageState extends State<RemoteMouseHomePage> {
                 padding: EdgeInsets.symmetric(vertical: 16),
                 backgroundColor: _isRunning ? Colors.red : Colors.green,
                 foregroundColor: Colors.white,
+              ),
+            ),
+            SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    Icon(Icons.minimize, color: Colors.blue),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Minimize to background when client connects',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ),
+                    Switch(
+                      value: _minimizeOnConnect,
+                      onChanged: (value) {
+                        setState(() {
+                          _minimizeOnConnect = value;
+                        });
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
             if (_isRunning) ...[

@@ -15,7 +15,7 @@ class KeyboardController {
   // Browser navigation keys
   static void browserBack() => _sendKeyCombo([VK_BROWSER_BACK]);
   static void browserForward() => _sendKeyCombo([VK_BROWSER_FORWARD]);
-  static void browserRefresh() => _sendKeyCombo([VK_F5]);
+  static void browserRefresh() => _sendKey(VK_F5);
   static void browserHome() => _sendKeyCombo([VK_BROWSER_HOME]);
   static void browserSearch() => _sendKeyCombo([VK_BROWSER_SEARCH]);
   static void browserFavorites() => _sendKeyCombo([VK_BROWSER_FAVORITES]);
@@ -96,8 +96,29 @@ class KeyboardController {
   static void sendText(String text) {
     for (int i = 0; i < text.length; i++) {
       final char = text.codeUnitAt(i);
-      _sendKey(char);
-      Sleep(10); // Small delay between characters
+      // Use Unicode input for better character support
+      _sendUnicodeKey(char);
+      Sleep(20); // Small delay between characters
+    }
+  }
+
+  // Send Unicode character
+  static void _sendUnicodeKey(int charCode) {
+    final input = calloc<INPUT>();
+    try {
+      input.ref.type = INPUT_KEYBOARD;
+      input.ref.ki.wVk = 0; // Virtual key code (0 for Unicode)
+      input.ref.ki.wScan = charCode; // Unicode character
+      input.ref.ki.dwFlags = KEYEVENTF_UNICODE; // Unicode flag
+      SendInput(1, input, sizeOf<INPUT>());
+      
+      // Small delay
+      Sleep(20);
+      
+      input.ref.ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP; // Key up
+      SendInput(1, input, sizeOf<INPUT>());
+    } finally {
+      calloc.free(input);
     }
   }
 }

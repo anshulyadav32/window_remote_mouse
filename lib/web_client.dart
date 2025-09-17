@@ -471,7 +471,6 @@ const webClientHtml = r'''
 
     // Media controls
     document.getElementById('media_play_pause').onclick = () => send({type: "media_play_pause"});
-    document.getElementById('media_stop').onclick = () => send({type: "media_stop"});
     document.getElementById('media_next').onclick = () => send({type: "media_next"});
     document.getElementById('media_previous').onclick = () => send({type: "media_previous"});
     document.getElementById('volume_up').onclick = () => send({type: "volume_up"});
@@ -486,8 +485,6 @@ const webClientHtml = r'''
     document.getElementById('browser_forward').onclick = () => send({type: "browser_forward"});
     document.getElementById('browser_refresh').onclick = () => send({type: "browser_refresh"});
     document.getElementById('browser_home').onclick = () => send({type: "browser_home"});
-    document.getElementById('browser_search').onclick = () => send({type: "browser_search"});
-    document.getElementById('browser_favorites').onclick = () => send({type: "browser_favorites"});
     document.getElementById('next_tab').onclick = () => send({type: "next_tab"});
     document.getElementById('previous_tab').onclick = () => send({type: "previous_tab"});
     document.getElementById('close_tab').onclick = () => send({type: "close_tab"});
@@ -497,7 +494,6 @@ const webClientHtml = r'''
     document.getElementById('alt_tab').onclick = () => send({type: "alt_tab"});
     document.getElementById('minimize_window').onclick = () => send({type: "minimize_window"});
     document.getElementById('maximize_window').onclick = () => send({type: "maximize_window"});
-    document.getElementById('close_window').onclick = () => send({type: "close_window"});
     document.getElementById('toggle_fullscreen').onclick = () => send({type: "toggle_fullscreen"});
 
     // Text input

@@ -17,14 +17,31 @@ class MouseController {
 
   static void moveTo(int x, int y) => SetCursorPos(x, y);
 
-  static void clickLeft({bool down = false, bool up = false}) => _mouseEvent(
-      (down ? MOUSEEVENTF_LEFTDOWN : 0) | (up ? MOUSEEVENTF_LEFTUP : 0));
+  static void clickLeft({bool down = false, bool up = false}) {
+    if (down && up) {
+      // Single click - send both down and up events
+      _mouseEvent(MOUSEEVENTF_LEFTDOWN);
+      Sleep(50); // Small delay
+      _mouseEvent(MOUSEEVENTF_LEFTUP);
+    } else {
+      _mouseEvent((down ? MOUSEEVENTF_LEFTDOWN : 0) | (up ? MOUSEEVENTF_LEFTUP : 0));
+    }
+  }
 
-  static void clickRight({bool down = false, bool up = false}) => _mouseEvent(
-      (down ? MOUSEEVENTF_RIGHTDOWN : 0) | (up ? MOUSEEVENTF_RIGHTUP : 0));
+  static void clickRight({bool down = false, bool up = false}) {
+    if (down && up) {
+      // Single click - send both down and up events
+      _mouseEvent(MOUSEEVENTF_RIGHTDOWN);
+      Sleep(50); // Small delay
+      _mouseEvent(MOUSEEVENTF_RIGHTUP);
+    } else {
+      _mouseEvent((down ? MOUSEEVENTF_RIGHTDOWN : 0) | (up ? MOUSEEVENTF_RIGHTUP : 0));
+    }
+  }
 
   static void doubleClickLeft() {
     clickLeft(down: true, up: true);
+    Sleep(100); // Delay between clicks for double-click recognition
     clickLeft(down: true, up: true);
   }
 

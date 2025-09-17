@@ -8,10 +8,11 @@ class RemoteMouseServer {
   final String host;
   final int port;
   final String token;
+  final Function()? onClientConnected;
 
   HttpServer? _server;
 
-  RemoteMouseServer({this.host='0.0.0.0', this.port=8765, required this.token});
+  RemoteMouseServer({this.host='0.0.0.0', this.port=8765, required this.token, this.onClientConnected});
 
   Future<void> start() async {
     _server = await HttpServer.bind(host, port);
@@ -29,6 +30,10 @@ class RemoteMouseServer {
         }
         final socket = await WebSocketTransformer.upgrade(request);
         print('🔗 Client connected');
+        
+        // Call the callback when client connects
+        onClientConnected?.call();
+        
         socket.listen((data) {
           try {
             final msg = jsonDecode(data as String);
@@ -56,19 +61,28 @@ class RemoteMouseServer {
       case 'move':
         final dx = _toInt(msg['dx']) ?? 0;
         final dy = _toInt(msg['dy']) ?? 0;
-        MouseController.moveBy(dx, dy);
+        try {
+          MouseController.moveBy(dx, dy);
+        } catch (e) {
+          print('❌ Mouse move error: $e');
+        }
         break;
         
       case 'click':
         final button = msg['button'] as String? ?? 'left';
         final kind = msg['kind'] as String? ?? 'single';
         
-        if (kind == 'double' && button == 'left') {
-          MouseController.doubleClickLeft();
-        } else if (button == 'left') {
-          MouseController.clickLeft(down: true, up: true);
-        } else if (button == 'right') {
-          MouseController.clickRight(down: true, up: true);
+        try {
+          if (kind == 'double' && button == 'left') {
+            MouseController.doubleClickLeft();
+          } else if (button == 'left') {
+            MouseController.clickLeft(down: true, up: true);
+          } else if (button == 'right') {
+            MouseController.clickRight(down: true, up: true);
+          }
+          print('✅ Mouse click: $button $kind');
+        } catch (e) {
+          print('❌ Mouse click error: $e');
         }
         break;
         
@@ -79,34 +93,84 @@ class RemoteMouseServer {
         
       // Media controls
       case 'media_play_pause':
-        KeyboardController.playPause();
+        try {
+          KeyboardController.playPause();
+          print('✅ Media: play/pause');
+        } catch (e) {
+          print('❌ Media play/pause error: $e');
+        }
         break;
       case 'media_stop':
-        KeyboardController.stop();
+        try {
+          KeyboardController.stop();
+          print('✅ Media: stop');
+        } catch (e) {
+          print('❌ Media stop error: $e');
+        }
         break;
       case 'media_next':
-        KeyboardController.nextTrack();
+        try {
+          KeyboardController.nextTrack();
+          print('✅ Media: next track');
+        } catch (e) {
+          print('❌ Media next error: $e');
+        }
         break;
       case 'media_previous':
-        KeyboardController.previousTrack();
+        try {
+          KeyboardController.previousTrack();
+          print('✅ Media: previous track');
+        } catch (e) {
+          print('❌ Media previous error: $e');
+        }
         break;
       case 'volume_up':
-        KeyboardController.volumeUp();
+        try {
+          KeyboardController.volumeUp();
+          print('✅ Volume: up');
+        } catch (e) {
+          print('❌ Volume up error: $e');
+        }
         break;
       case 'volume_down':
-        KeyboardController.volumeDown();
+        try {
+          KeyboardController.volumeDown();
+          print('✅ Volume: down');
+        } catch (e) {
+          print('❌ Volume down error: $e');
+        }
         break;
       case 'volume_mute':
-        KeyboardController.mute();
+        try {
+          KeyboardController.mute();
+          print('✅ Volume: mute');
+        } catch (e) {
+          print('❌ Volume mute error: $e');
+        }
         break;
       case 'space':
-        KeyboardController.spaceBar();
+        try {
+          KeyboardController.spaceBar();
+          print('✅ Space bar');
+        } catch (e) {
+          print('❌ Space bar error: $e');
+        }
         break;
       case 'seek_forward':
-        KeyboardController.seekForward();
+        try {
+          KeyboardController.seekForward();
+          print('✅ Seek: forward');
+        } catch (e) {
+          print('❌ Seek forward error: $e');
+        }
         break;
       case 'seek_backward':
-        KeyboardController.seekBackward();
+        try {
+          KeyboardController.seekBackward();
+          print('✅ Seek: backward');
+        } catch (e) {
+          print('❌ Seek backward error: $e');
+        }
         break;
         
       // Browser controls
