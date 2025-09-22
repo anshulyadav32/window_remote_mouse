@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:win32/win32.dart';
 import 'server.dart';
+import 'android_client.dart';
 
 void main() {
   runApp(RemoteMouseApp());
@@ -17,7 +18,7 @@ class RemoteMouseApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: RemoteMouseHomePage(),
+      home: Platform.isAndroid ? AndroidClientApp() : RemoteMouseHomePage(),
     );
   }
 }
@@ -141,7 +142,8 @@ class _RemoteMouseHomePageState extends State<RemoteMouseHomePage> {
       
       setState(() {
         _isRunning = true;
-        _serverUrl = 'http://$ip:8765';
+        // Show both IP and custom domain options
+        _serverUrl = 'http://$ip:8765 or http://remotemouse.local:8765';
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -176,82 +178,82 @@ class _RemoteMouseHomePageState extends State<RemoteMouseHomePage> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    Icon(
-                      _isRunning ? Icons.wifi : Icons.wifi_off,
-                      size: 48,
-                      color: _isRunning ? Colors.green : Colors.grey,
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      _isRunning ? 'Server Running' : 'Server Stopped',
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                    if (_isRunning) ...[
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      Icon(
+                        _isRunning ? Icons.wifi : Icons.wifi_off,
+                        size: 48,
+                        color: _isRunning ? Colors.green : Colors.grey,
+                      ),
                       SizedBox(height: 8),
                       Text(
-                        _serverUrl,
-                        style: Theme.of(context).textTheme.bodyMedium,
+                        _isRunning ? 'Server Running' : 'Server Stopped',
+                        style: Theme.of(context).textTheme.headlineSmall,
                       ),
+                      if (_isRunning) ...[
+                        SizedBox(height: 8),
+                        Text(
+                          _serverUrl,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-            ),
-            SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: _isRunning ? _stopServer : _startServer,
-              icon: Icon(_isRunning ? Icons.stop : Icons.play_arrow),
-              label: Text(_isRunning ? 'Stop Server' : 'Start Server'),
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: _isRunning ? Colors.red : Colors.green,
-                foregroundColor: Colors.white,
-              ),
-            ),
-            SizedBox(height: 16),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    Icon(Icons.minimize, color: Colors.blue),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Minimize to background when client connects',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    ),
-                    Switch(
-                      value: _minimizeOnConnect,
-                      onChanged: (value) {
-                        setState(() {
-                          _minimizeOnConnect = value;
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            if (_isRunning) ...[
-              SizedBox(height: 24),
-              Text(
-                'Scan QR Code to Connect:',
-                style: Theme.of(context).textTheme.titleMedium,
-                textAlign: TextAlign.center,
               ),
               SizedBox(height: 16),
-              Expanded(
-                child: Center(
+              ElevatedButton.icon(
+                onPressed: _isRunning ? _stopServer : _startServer,
+                icon: Icon(_isRunning ? Icons.stop : Icons.play_arrow),
+                label: Text(_isRunning ? 'Stop Server' : 'Start Server'),
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: _isRunning ? Colors.red : Colors.green,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+              SizedBox(height: 16),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    children: [
+                      Icon(Icons.minimize, color: Colors.blue),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Minimize to background when client connects',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ),
+                      Switch(
+                        value: _minimizeOnConnect,
+                        onChanged: (value) {
+                          setState(() {
+                            _minimizeOnConnect = value;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              if (_isRunning) ...[
+                SizedBox(height: 24),
+                Text(
+                  'Scan QR Code to Connect:',
+                  style: Theme.of(context).textTheme.titleMedium,
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 16),
+                Center(
                   child: Container(
                     padding: EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -273,24 +275,25 @@ class _RemoteMouseHomePageState extends State<RemoteMouseHomePage> {
                     ),
                   ),
                 ),
-              ),
-              SizedBox(height: 16),
-              Text(
-                'Instructions:\n'
-                '1. Connect your phone to the same WiFi network\n'
-                '2. Scan the QR code or visit: $_serverUrl\n'
-                '3. Use your phone as a remote control!\n\n'
-                'Features:\n'
-                '🖱️ Mouse Control - Move cursor and click\n'
-                '🎵 Media Control - Play/pause, volume, seek\n'
-                '🌐 Browser Control - Navigation and tabs\n'
-                '🪟 Window Management - Alt+Tab, minimize, etc.\n'
-                '⌨️ Text Input - Send text to computer',
-                style: Theme.of(context).textTheme.bodyMedium,
-                textAlign: TextAlign.center,
-              ),
+                SizedBox(height: 16),
+                Text(
+                  'Instructions:\n'
+                  '1. Connect your phone to the same WiFi network\n'
+                  '2. Scan the QR code or visit: $_serverUrl\n'
+                  '3. Use your phone as a remote control!\n\n'
+                  'Features:\n'
+                  '🖱️ Mouse Control - Move cursor and click\n'
+                  '🎵 Media Control - Play/pause, volume, seek\n'
+                  '🌐 Browser Control - Navigation and tabs\n'
+                  '🪟 Window Management - Alt+Tab, minimize, etc.\n'
+                  '⌨️ Text Input - Send text to computer',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 16),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

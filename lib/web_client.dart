@@ -1,405 +1,500 @@
-const webClientHtml = r'''
-<!doctype html>
-<html>
+const String webClientHtml = '''
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Remote Mouse & Media Control</title>
+  <title>Remote Mouse</title>
   <style>
-    * { box-sizing: border-box; }
-    body { 
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-      margin: 0; 
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
+      color: #333;
     }
-    
-    .navbar {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      padding: 12px 16px;
-      box-shadow: 0 2px 20px rgba(0,0,0,0.1);
-      position: sticky;
-      top: 0;
-      z-index: 100;
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
     }
-    
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .title {
+      color: white;
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .status {
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: 600;
+      display: inline-block;
+      margin-bottom: 20px;
+    }
+
+    .status-connected {
+      background: #4caf50;
+      color: white;
+    }
+
+    .status-disconnected {
+      background: #f44336;
+      color: white;
+    }
+
     .nav-tabs {
       display: flex;
-      gap: 8px;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
+      background: rgba(255,255,255,0.1);
+      border-radius: 15px;
+      padding: 5px;
+      margin-bottom: 20px;
+      backdrop-filter: blur(10px);
     }
-    
+
     .nav-tab {
+      flex: 1;
+      padding: 12px 8px;
+      border: none;
       background: transparent;
-      border: 2px solid #e0e0e0;
-      border-radius: 25px;
-      padding: 8px 16px;
-      font-size: 14px;
-      font-weight: 500;
-      color: #666;
+      color: white;
+      border-radius: 10px;
       cursor: pointer;
       transition: all 0.3s ease;
-      white-space: nowrap;
-      min-width: fit-content;
+      font-size: 0.9rem;
+      font-weight: 500;
     }
-    
+
+    .nav-tab:hover {
+      background: rgba(255,255,255,0.1);
+    }
+
     .nav-tab.active {
-      background: #667eea;
-      border-color: #667eea;
-      color: white;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+      background: white;
+      color: #333;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
-    
-    .nav-tab:hover:not(.active) {
-      border-color: #667eea;
-      color: #667eea;
-    }
-    
-    .content {
-      padding: 16px;
-    }
-    
+
     .tab-content {
       display: none;
+      background: white;
+      border-radius: 20px;
+      padding: 25px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      backdrop-filter: blur(10px);
     }
-    
+
     .tab-content.active {
       display: block;
     }
-    
-    #status { 
-      padding: 12px 16px; 
-      background: rgba(255, 255, 255, 0.9);
-      border-radius: 12px;
-      margin-bottom: 16px;
-      text-align: center;
-      font-weight: 500;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+
+    .section-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 15px;
+      color: #333;
+      border-bottom: 2px solid #667eea;
+      padding-bottom: 5px;
     }
-    
-    .status-connected { color: #4caf50; }
-    .status-disconnected { color: #f44336; }
-    
-    #pad { 
-      touch-action: none; 
-      height: 50vh; 
-      border: 2px dashed #ccc; 
-      margin: 16px 0; 
-      border-radius: 16px; 
-      background: rgba(255, 255, 255, 0.9);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+
+    .trackpad {
+      width: 100%;
+      height: 200px;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      border-radius: 15px;
+      margin-bottom: 20px;
+      cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #999;
-      font-size: 18px;
+      font-size: 1.1rem;
+      color: #666;
+      border: 2px solid #e0e0e0;
+      transition: all 0.3s ease;
     }
-    
-    .control-grid {
+
+    .trackpad:hover {
+      border-color: #667eea;
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+    }
+
+    .mouse-buttons {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      gap: 12px;
-      margin: 16px 0;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 20px;
     }
-    
-    .control-section {
-      background: rgba(255, 255, 255, 0.9);
-      border-radius: 16px;
-      padding: 16px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    }
-    
-    .section-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 12px;
-      text-align: center;
-    }
-    
-    button { 
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+    .control-button {
+      padding: 15px;
       border: none;
       border-radius: 12px;
-      padding: 12px 8px;
-      font-size: 12px;
-      font-weight: 500;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
       transition: all 0.3s ease;
-      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-      min-height: 44px;
       display: flex;
-      flex-direction: column;
       align-items: center;
-      gap: 4px;
+      justify-content: center;
+      gap: 8px;
     }
-    
-    button:hover {
+
+    .control-button:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
     }
-    
-    button:active {
+
+    .control-button:active {
       transform: translateY(0);
     }
-    
+
     .media-controls {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 10px;
+      margin-bottom: 20px;
     }
-    
-    .volume-controls {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-    
+
     .browser-controls {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 8px;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 10px;
+      margin-bottom: 20px;
     }
-    
-    .tab-controls {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 8px;
-    }
-    
+
     .window-controls {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 8px;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+      margin-bottom: 20px;
     }
-    
-    .mouse-controls {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-    
+
     .text-input {
       width: 100%;
-      padding: 12px 16px;
+      padding: 12px;
       border: 2px solid #e0e0e0;
-      border-radius: 12px;
-      font-size: 16px;
-      margin-bottom: 12px;
-      background: rgba(255, 255, 255, 0.9);
+      border-radius: 10px;
+      font-size: 1rem;
+      margin-bottom: 15px;
+      transition: border-color 0.3s ease;
     }
-    
+
     .text-input:focus {
       outline: none;
       border-color: #667eea;
       box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
-    
-    .icon {
-      font-size: 18px;
+
+    .text-controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
     }
-    
-    @media (max-width: 480px) {
-      .control-grid {
+
+    .clipboard-section {
+      margin-bottom: 20px;
+    }
+
+    .clipboard-controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .auto-clipboard-section {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 15px;
+    }
+
+    .icon {
+      font-size: 1.2rem;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 15px;
+      }
+      
+      .title {
+        font-size: 2rem;
+      }
+      
+      .nav-tab {
+        font-size: 0.8rem;
+        padding: 10px 5px;
+      }
+      
+      .mouse-buttons {
         grid-template-columns: 1fr;
       }
       
       .media-controls,
-      .volume-controls,
       .browser-controls,
-      .tab-controls,
-      .window-controls,
-      .mouse-controls {
-        grid-template-columns: repeat(2, 1fr);
+      .window-controls {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
       }
     }
   </style>
 </head>
 <body>
-  <div class="navbar">
+  <div class="container">
+    <div class="header">
+      <h1 class="title">🖱️ Remote Mouse</h1>
+      <div id="status" class="status status-disconnected">Connecting...</div>
+    </div>
+
     <div class="nav-tabs">
       <button class="nav-tab active" data-tab="mouse">🖱️ Mouse</button>
       <button class="nav-tab" data-tab="media">🎵 Media</button>
       <button class="nav-tab" data-tab="browser">🌐 Browser</button>
       <button class="nav-tab" data-tab="window">🪟 Window</button>
       <button class="nav-tab" data-tab="text">⌨️ Text</button>
+      <button class="nav-tab" data-tab="clipboard">📋 Clipboard</button>
     </div>
-  </div>
 
-  <div class="content">
-    <div id="status" class="status-disconnected">Disconnected</div>
-    
     <!-- Mouse Tab -->
     <div id="mouse-tab" class="tab-content active">
-      <div id="pad">Touch and drag to move mouse</div>
-      <div class="control-section">
-        <div class="section-title">Mouse Controls</div>
-        <div class="mouse-controls">
-          <button id="left">
-            <span class="icon">👆</span>
-            <span>Left Click</span>
-          </button>
-          <button id="right">
-            <span class="icon">👆</span>
-            <span>Right Click</span>
-          </button>
-          <button id="dbl">
-            <span class="icon">👆👆</span>
-            <span>Double Click</span>
-          </button>
-        </div>
+      <div class="section-title">Mouse Control</div>
+      <div id="pad" class="trackpad">
+        Move your finger here to control the mouse
+      </div>
+      
+      <div class="mouse-buttons">
+        <button id="left" class="control-button">
+          <span class="icon">👆</span>
+          <span>Left Click</span>
+        </button>
+        <button id="right" class="control-button">
+          <span class="icon">👆</span>
+          <span>Right Click</span>
+        </button>
+        <button id="dbl" class="control-button">
+          <span class="icon">👆👆</span>
+          <span>Double Click</span>
+        </button>
+      </div>
+
+      <div class="auto-clipboard-section">
+        <button id="autoClipboard" class="control-button" style="width: 100%;">
+          <span class="icon">📋</span>
+          <span>Enable Auto Clipboard</span>
+        </button>
       </div>
     </div>
-    
+
     <!-- Media Tab -->
     <div id="media-tab" class="tab-content">
-      <div class="control-section">
-        <div class="section-title">Media Controls</div>
-        <div class="media-controls">
-          <button id="media_previous">
-            <span class="icon">⏮️</span>
-            <span>Previous</span>
-          </button>
-          <button id="media_play_pause">
-            <span class="icon">⏯️</span>
-            <span>Play/Pause</span>
-          </button>
-          <button id="media_next">
-            <span class="icon">⏭️</span>
-            <span>Next</span>
-          </button>
-        </div>
+      <div class="section-title">Media Controls</div>
+      <div class="media-controls">
+        <button id="media_play_pause" class="control-button">
+          <span class="icon">⏯️</span>
+          <span>Play/Pause</span>
+        </button>
+        <button id="media_previous" class="control-button">
+          <span class="icon">⏮️</span>
+          <span>Previous</span>
+        </button>
+        <button id="media_next" class="control-button">
+          <span class="icon">⏭️</span>
+          <span>Next</span>
+        </button>
+        <button id="space" class="control-button">
+          <span class="icon">⏸️</span>
+          <span>Space</span>
+        </button>
+        <button id="seek_backward" class="control-button">
+          <span class="icon">⏪</span>
+          <span>Seek Back</span>
+        </button>
+        <button id="seek_forward" class="control-button">
+          <span class="icon">⏩</span>
+          <span>Seek Forward</span>
+        </button>
       </div>
-      
-      <div class="control-section">
-        <div class="section-title">Volume Controls</div>
-        <div class="volume-controls">
-          <button id="volume_down">
-            <span class="icon">🔉</span>
-            <span>Volume Down</span>
-          </button>
-          <button id="volume_mute">
-            <span class="icon">🔇</span>
-            <span>Mute</span>
-          </button>
-          <button id="volume_up">
-            <span class="icon">🔊</span>
-            <span>Volume Up</span>
-          </button>
-        </div>
+
+      <div class="section-title">Volume Controls</div>
+      <div class="media-controls">
+        <button id="volume_up" class="control-button">
+          <span class="icon">🔊</span>
+          <span>Volume Up</span>
+        </button>
+        <button id="volume_down" class="control-button">
+          <span class="icon">🔉</span>
+          <span>Volume Down</span>
+        </button>
+        <button id="volume_mute" class="control-button">
+          <span class="icon">🔇</span>
+          <span>Mute</span>
+        </button>
       </div>
-      
-      <div class="control-section">
-        <div class="section-title">Seek Controls</div>
-        <div class="media-controls">
-          <button id="seek_backward">
-            <span class="icon">⏪</span>
-            <span>Seek Back</span>
-          </button>
-          <button id="space">
-            <span class="icon">⏸️</span>
-            <span>Space</span>
-          </button>
-          <button id="seek_forward">
-            <span class="icon">⏩</span>
-            <span>Seek Forward</span>
-          </button>
-        </div>
+
+      <div class="auto-clipboard-section">
+        <button id="autoClipboardMedia" class="control-button" style="width: 100%;">
+          <span class="icon">📋</span>
+          <span>Enable Auto Clipboard</span>
+        </button>
       </div>
     </div>
-    
+
     <!-- Browser Tab -->
     <div id="browser-tab" class="tab-content">
-      <div class="control-section">
-        <div class="section-title">Browser Navigation</div>
-        <div class="browser-controls">
-          <button id="browser_back">
-            <span class="icon">⬅️</span>
-            <span>Back</span>
-          </button>
-          <button id="browser_forward">
-            <span class="icon">➡️</span>
-            <span>Forward</span>
-          </button>
-          <button id="browser_refresh">
-            <span class="icon">🔄</span>
-            <span>Refresh</span>
-          </button>
-          <button id="browser_home">
-            <span class="icon">🏠</span>
-            <span>Home</span>
-          </button>
-        </div>
+      <div class="section-title">Browser Navigation</div>
+      <div class="browser-controls">
+        <button id="browser_back" class="control-button">
+          <span class="icon">⬅️</span>
+          <span>Back</span>
+        </button>
+        <button id="browser_forward" class="control-button">
+          <span class="icon">➡️</span>
+          <span>Forward</span>
+        </button>
+        <button id="browser_refresh" class="control-button">
+          <span class="icon">🔄</span>
+          <span>Refresh</span>
+        </button>
+        <button id="browser_home" class="control-button">
+          <span class="icon">🏠</span>
+          <span>Home</span>
+        </button>
       </div>
-      
-      <div class="control-section">
-        <div class="section-title">Tab Management</div>
-        <div class="tab-controls">
-          <button id="previous_tab">
-            <span class="icon">⬅️</span>
-            <span>Prev Tab</span>
-          </button>
-          <button id="next_tab">
-            <span class="icon">➡️</span>
-            <span>Next Tab</span>
-          </button>
-          <button id="new_tab">
-            <span class="icon">➕</span>
-            <span>New Tab</span>
-          </button>
-          <button id="close_tab">
-            <span class="icon">❌</span>
-            <span>Close Tab</span>
-          </button>
-        </div>
+
+      <div class="section-title">Tab Management</div>
+      <div class="browser-controls">
+        <button id="new_tab" class="control-button">
+          <span class="icon">➕</span>
+          <span>New Tab</span>
+        </button>
+        <button id="close_tab" class="control-button">
+          <span class="icon">❌</span>
+          <span>Close Tab</span>
+        </button>
+        <button id="previous_tab" class="control-button">
+          <span class="icon">⬅️</span>
+          <span>Prev Tab</span>
+        </button>
+        <button id="next_tab" class="control-button">
+          <span class="icon">➡️</span>
+          <span>Next Tab</span>
+        </button>
+      </div>
+
+      <div class="auto-clipboard-section">
+        <button id="autoClipboardBrowser" class="control-button" style="width: 100%;">
+          <span class="icon">📋</span>
+          <span>Enable Auto Clipboard</span>
+        </button>
       </div>
     </div>
-    
+
     <!-- Window Tab -->
     <div id="window-tab" class="tab-content">
-      <div class="control-section">
-        <div class="section-title">Window Management</div>
-        <div class="window-controls">
-          <button id="alt_tab">
-            <span class="icon">🔄</span>
-            <span>Alt+Tab</span>
-          </button>
-          <button id="toggle_fullscreen">
-            <span class="icon">⛶</span>
-            <span>Fullscreen</span>
-          </button>
-          <button id="minimize_window">
-            <span class="icon">➖</span>
-            <span>Minimize</span>
-          </button>
-          <button id="maximize_window">
-            <span class="icon">➕</span>
-            <span>Maximize</span>
-          </button>
-        </div>
+      <div class="section-title">Window Management</div>
+      <div class="window-controls">
+        <button id="alt_tab" class="control-button">
+          <span class="icon">🔄</span>
+          <span>Alt+Tab</span>
+        </button>
+        <button id="minimize_window" class="control-button">
+          <span class="icon">🔽</span>
+          <span>Minimize</span>
+        </button>
+        <button id="maximize_window" class="control-button">
+          <span class="icon">🔼</span>
+          <span>Maximize</span>
+        </button>
+        <button id="toggle_fullscreen" class="control-button">
+          <span class="icon">⛶</span>
+          <span>Fullscreen</span>
+        </button>
+      </div>
+
+      <div class="auto-clipboard-section">
+        <button id="autoClipboardWindow" class="control-button" style="width: 100%;">
+          <span class="icon">📋</span>
+          <span>Enable Auto Clipboard</span>
+        </button>
       </div>
     </div>
-    
+
     <!-- Text Tab -->
     <div id="text-tab" class="tab-content">
-      <div class="control-section">
-        <div class="section-title">Text Input</div>
-        <input type="text" id="textInput" class="text-input" placeholder="Type text to send...">
-        <button id="sendText" style="width: 100%;">
+      <div class="section-title">Text Input</div>
+      <input type="text" id="textInput" class="text-input" placeholder="Type text to send...">
+      
+      <div class="text-controls">
+        <button id="sendText" class="control-button" style="flex: 1;">
           <span class="icon">📤</span>
           <span>Send Text</span>
         </button>
+        <button id="copyText" class="control-button" style="flex: 1;">
+          <span class="icon">📋</span>
+          <span>Copy</span>
+        </button>
+        <button id="sendCopiedText" class="control-button" style="flex: 1;">
+          <span class="icon">📋📤</span>
+          <span>Send Copied</span>
+        </button>
       </div>
+
+      <div class="auto-clipboard-section">
+        <button id="autoClipboardText" class="control-button" style="width: 100%;">
+          <span class="icon">📋</span>
+          <span>Enable Auto Clipboard</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Clipboard Tab -->
+    <div id="clipboard-tab" class="tab-content">
+      <div class="section-title">Clipboard Content</div>
+      <textarea id="clipboardContent" class="text-input" rows="4" placeholder="Clipboard content will appear here..." readonly></textarea>
+      
+      <div class="clipboard-controls">
+        <button id="getClipboard" class="control-button">
+          <span class="icon">📥</span>
+          <span>Get Clipboard</span>
+        </button>
+        <button id="copyToDevice" class="control-button">
+          <span class="icon">📤</span>
+          <span>Copy to Device</span>
+        </button>
+        <button id="refreshClipboard" class="control-button">
+          <span class="icon">🔄</span>
+          <span>Refresh</span>
+        </button>
+      </div>
+
+      <div class="section-title">Set Device Clipboard</div>
+      <textarea id="clipboardInput" class="text-input" rows="3" placeholder="Type text to send to device clipboard..."></textarea>
+      <button id="setClipboard" class="control-button" style="width: 100%;">
+        <span class="icon">📋</span>
+        <span>Set Device Clipboard</span>
+      </button>
     </div>
   </div>
 
   <script>
     let ws;
     let lastX = null, lastY = null;
+    let autoClipboardEnabled = false;
 
     function connect() {
       const proto = location.protocol === "https:" ? "wss" : "ws";
@@ -408,17 +503,25 @@ const webClientHtml = r'''
       
       ws.onopen = () => {
         document.getElementById('status').textContent = "Connected";
-        document.getElementById('status').className = "status-connected";
+        document.getElementById('status').className = "status status-connected";
       };
       
       ws.onclose = () => {
         document.getElementById('status').textContent = "Disconnected";
-        document.getElementById('status').className = "status-disconnected";
+        document.getElementById('status').className = "status status-disconnected";
       };
       
       ws.onerror = () => {
         document.getElementById('status').textContent = "Connection Error";
-        document.getElementById('status').className = "status-disconnected";
+        document.getElementById('status').className = "status status-disconnected";
+      };
+
+      // Handle incoming WebSocket messages
+      ws.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        if (data.type === 'clipboard_content') {
+          document.getElementById('clipboardContent').value = data.content;
+        }
       };
     }
     connect();
@@ -511,6 +614,137 @@ const webClientHtml = r'''
         document.getElementById('sendText').click();
       }
     });
+
+    // Copy text button handler
+    document.getElementById('copyText').onclick = () => {
+      const textInput = document.getElementById('textInput');
+      const text = textInput.value;
+      if (text.trim()) {
+        // Copy to browser clipboard
+        navigator.clipboard.writeText(text).then(() => {
+          // Visual feedback
+          const button = document.getElementById('copyText');
+          const originalText = button.innerHTML;
+          button.innerHTML = '<span class="icon">✓</span><span>Copied!</span>';
+          button.style.background = 'linear-gradient(135deg, #4caf50 0%, #45a049 100%)';
+          
+          setTimeout(() => {
+            button.innerHTML = originalText;
+            button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+          }, 1000);
+        }).catch(err => {
+          console.error('Failed to copy text: ', err);
+        });
+      }
+    };
+
+    // Send copied text button handler
+    document.getElementById('sendCopiedText').onclick = () => {
+      navigator.clipboard.readText().then(text => {
+        if (text.trim()) {
+          // Send the copied text to the device
+          send({type: "send_text", text: text});
+          
+          // Visual feedback
+          const button = document.getElementById('sendCopiedText');
+          const originalText = button.innerHTML;
+          button.innerHTML = '<span class="icon">✓</span><span>Sent!</span>';
+          button.style.background = 'linear-gradient(135deg, #4caf50 0%, #45a049 100%)';
+          
+          setTimeout(() => {
+            button.innerHTML = originalText;
+            button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+          }, 1000);
+        } else {
+          // Show error if clipboard is empty
+          const button = document.getElementById('sendCopiedText');
+          const originalText = button.innerHTML;
+          button.innerHTML = '<span class="icon">❌</span><span>Empty!</span>';
+          button.style.background = 'linear-gradient(135deg, #f44336 0%, #d32f2f 100%)';
+          
+          setTimeout(() => {
+            button.innerHTML = originalText;
+            button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+          }, 1000);
+        }
+      }).catch(err => {
+        console.error('Failed to read clipboard: ', err);
+        // Show error feedback
+        const button = document.getElementById('sendCopiedText');
+        const originalText = button.innerHTML;
+        button.innerHTML = '<span class="icon">❌</span><span>Error!</span>';
+        button.style.background = 'linear-gradient(135deg, #f44336 0%, #d32f2f 100%)';
+        
+        setTimeout(() => {
+          button.innerHTML = originalText;
+          button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        }, 1000);
+      });
+    };
+
+    // Clipboard controls
+    document.getElementById('getClipboard').onclick = () => {
+      send({type: "get_clipboard"});
+    };
+
+    document.getElementById('setClipboard').onclick = () => {
+      const text = document.getElementById('clipboardInput').value;
+      if (text.trim()) {
+        send({type: "set_clipboard", text: text});
+        document.getElementById('clipboardInput').value = '';
+      }
+    };
+
+    document.getElementById('copyToDevice').onclick = () => {
+      const text = document.getElementById('clipboardContent').value;
+      if (text.trim()) {
+        send({type: "set_clipboard", text: text});
+      }
+    };
+
+    document.getElementById('refreshClipboard').onclick = () => {
+      send({type: "get_clipboard"});
+    };
+
+    // Auto clipboard toggle function
+    function toggleAutoClipboard(buttonId) {
+      autoClipboardEnabled = !autoClipboardEnabled;
+      const button = document.getElementById(buttonId);
+      
+      if (autoClipboardEnabled) {
+        button.innerHTML = '<span class="icon">📋</span><span>Disable Auto Clipboard</span>';
+        button.style.background = 'linear-gradient(135deg, #4caf50 0%, #45a049 100%)';
+        send({type: "enable_auto_clipboard"});
+      } else {
+        button.innerHTML = '<span class="icon">📋</span><span>Enable Auto Clipboard</span>';
+        button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        send({type: "disable_auto_clipboard"});
+      }
+      
+      // Update all other auto clipboard buttons to match the state
+      const allAutoClipboardButtons = ['autoClipboard', 'autoClipboardMedia', 'autoClipboardBrowser', 'autoClipboardWindow', 'autoClipboardText'];
+      allAutoClipboardButtons.forEach(id => {
+        if (id !== buttonId) {
+          const otherButton = document.getElementById(id);
+          if (otherButton) {
+            if (autoClipboardEnabled) {
+              otherButton.innerHTML = '<span class="icon">📋</span><span>Disable Auto Clipboard</span>';
+              otherButton.style.background = 'linear-gradient(135deg, #4caf50 0%, #45a049 100%)';
+            } else {
+              otherButton.innerHTML = '<span class="icon">📋</span><span>Enable Auto Clipboard</span>';
+              otherButton.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            }
+          }
+        }
+      });
+    }
+    
+    // Auto clipboard button event handlers
+    document.getElementById('autoClipboard').onclick = () => toggleAutoClipboard('autoClipboard');
+    document.getElementById('autoClipboardMedia').onclick = () => toggleAutoClipboard('autoClipboardMedia');
+    document.getElementById('autoClipboardBrowser').onclick = () => toggleAutoClipboard('autoClipboardBrowser');
+    document.getElementById('autoClipboardWindow').onclick = () => toggleAutoClipboard('autoClipboardWindow');
+    document.getElementById('autoClipboardText').onclick = () => toggleAutoClipboard('autoClipboardText');
   </script>
 </body>
 </html>

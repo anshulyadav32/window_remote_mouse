@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:async';
+import 'package:clipboard/clipboard.dart';
 import 'mouse.dart';
 import 'keyboard.dart';
 import 'web_client.dart';
@@ -11,12 +13,19 @@ class RemoteMouseServer {
   final Function()? onClientConnected;
 
   HttpServer? _server;
+  WebSocket? _currentSocket;
+  String _lastClipboardContent = '';
+  bool _autoClipboardEnabled = true; // Auto clipboard enabled by default
 
   RemoteMouseServer({this.host='0.0.0.0', this.port=8765, required this.token, this.onClientConnected});
 
   Future<void> start() async {
     _server = await HttpServer.bind(host, port);
     print('✅ Server running: http://$host:$port');
+    
+    // Start clipboard monitoring
+    _startClipboardMonitoring();
+    
     _server!.listen((HttpRequest request) async {
       final path = request.uri.path;
 
@@ -29,10 +38,14 @@ class RemoteMouseServer {
           return;
         }
         final socket = await WebSocketTransformer.upgrade(request);
+        _currentSocket = socket;
         print('🔗 Client connected');
         
         // Call the callback when client connects
         onClientConnected?.call();
+        
+        // Send current clipboard content to newly connected client
+        _sendClipboardToClient();
         
         socket.listen((data) {
           try {
@@ -41,7 +54,10 @@ class RemoteMouseServer {
           } catch (e) {
             print('❌ Error parsing message: $e');
           }
-        }, onDone: () => print('🔌 Client disconnected'));
+        }, onDone: () {
+          print('🔌 Client disconnected');
+          _currentSocket = null;
+        });
       } else if (path == '/' || path == '/index.html') {
         request.response.headers.contentType = ContentType.html;
         request.response.write(webClientHtml.replaceAll('CHANGE_ME_1234', token));
@@ -228,8 +244,71 @@ class RemoteMouseServer {
         KeyboardController.sendText(text);
         break;
         
+      // Clipboard operations
+      case 'set_clipboard':
+        final text = msg['text'] as String? ?? '';
+        _setClipboard(text);
+        break;
+        
+      case 'get_clipboard':
+        _sendClipboardToClient();
+        break;
+        
+      case 'enable_auto_clipboard':
+        _autoClipboardEnabled = true;
+        print('📋 Auto clipboard enabled');
+        break;
+        
+      case 'disable_auto_clipboard':
+        _autoClipboardEnabled = false;
+        print('📋 Auto clipboard disabled');
+        break;
+        
       default:
         print('⚠️ Unknown message type: $type');
+    }
+  }
+
+  // Clipboard monitoring and management methods
+  void _startClipboardMonitoring() {
+    // Monitor clipboard changes every 500ms
+    Timer.periodic(Duration(milliseconds: 500), (timer) async {
+      if (!_autoClipboardEnabled) return; // Only monitor if auto clipboard is enabled
+      
+      try {
+        final currentContent = await FlutterClipboard.paste();
+        if (currentContent != _lastClipboardContent && currentContent.isNotEmpty) {
+          _lastClipboardContent = currentContent;
+          _sendClipboardToClient();
+          print('📋 Clipboard changed: ${currentContent.length > 50 ? currentContent.substring(0, 50) + '...' : currentContent}');
+        }
+      } catch (e) {
+        // Ignore clipboard access errors
+      }
+    });
+  }
+
+  void _sendClipboardToClient() {
+    if (_currentSocket != null && _lastClipboardContent.isNotEmpty) {
+      try {
+        final message = jsonEncode({
+          'type': 'clipboard_content',
+          'content': _lastClipboardContent,
+        });
+        _currentSocket!.add(message);
+      } catch (e) {
+        print('❌ Error sending clipboard to client: $e');
+      }
+    }
+  }
+
+  void _setClipboard(String text) async {
+    try {
+      await FlutterClipboard.copy(text);
+      _lastClipboardContent = text;
+      print('📋 Clipboard set: ${text.length > 50 ? text.substring(0, 50) + '...' : text}');
+    } catch (e) {
+      print('❌ Error setting clipboard: $e');
     }
   }
 
