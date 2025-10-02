@@ -2,10 +2,27 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:win32/win32.dart';
+import 'package:window_manager/window_manager.dart';
+import 'package:system_tray/system_tray.dart';
 import 'server.dart';
 import 'android_client.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize window manager
+  await windowManager.ensureInitialized();
+  
+  // Configure window
+  windowManager.waitUntilReadyToShow(null, () async {
+    await windowManager.setTitle('WinMouse');
+    await windowManager.setSize(const Size(400, 600));
+    await windowManager.setMinimumSize(const Size(400, 600));
+    await windowManager.center();
+    await windowManager.show();
+    await windowManager.focus();
+  });
+  
   runApp(RemoteMouseApp());
 }
 
@@ -13,7 +30,7 @@ class RemoteMouseApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Remote Mouse Server',
+      title: 'WinMouse',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
@@ -28,12 +45,71 @@ class RemoteMouseHomePage extends StatefulWidget {
   _RemoteMouseHomePageState createState() => _RemoteMouseHomePageState();
 }
 
-class _RemoteMouseHomePageState extends State<RemoteMouseHomePage> {
+class _RemoteMouseHomePageState extends State<RemoteMouseHomePage> with WindowListener {
   RemoteMouseServer? _server;
   bool _isRunning = false;
   String _serverUrl = '';
   final String _token = 'SECURE_TOKEN_${DateTime.now().millisecondsSinceEpoch}';
   bool _minimizeOnConnect = true;
+  SystemTray? _systemTray;
+
+  @override
+  void initState() {
+    super.initState();
+    windowManager.addListener(this);
+    _initSystemTray();
+  }
+
+  @override
+  void dispose() {
+    windowManager.removeListener(this);
+    super.dispose();
+  }
+
+  void _initSystemTray() async {
+    _systemTray = SystemTray();
+    
+    // Create system tray menu
+    final menu = Menu(
+      children: [
+        MenuItem(
+          key: 'show',
+          label: 'Show WinMouse',
+          onClicked: () => windowManager.show(),
+        ),
+        MenuItem(
+          key: 'start_server',
+          label: 'Start Server',
+          onClicked: _startServer,
+        ),
+        MenuItem(
+          key: 'stop_server',
+          label: 'Stop Server',
+          onClicked: _stopServer,
+        ),
+        MenuSeparator(),
+        MenuItem(
+          key: 'exit',
+          label: 'Exit',
+          onClicked: () => windowManager.close(),
+        ),
+      ],
+    );
+
+    await _systemTray!.initSystemTray(
+      title: "WinMouse",
+      iconPath: "assets/icon.ico",
+    );
+    
+    await _systemTray!.setContextMenu(menu);
+    await _systemTray!.setToolTip("WinMouse - Remote Mouse Control");
+  }
+
+  @override
+  void onWindowClose() {
+    // Hide to system tray instead of closing
+    windowManager.hide();
+  }
 
   Future<String> _getLocalIP() async {
     try {
@@ -172,9 +248,16 @@ class _RemoteMouseHomePageState extends State<RemoteMouseHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Remote Mouse & Media Control'),
+        title: Text('WinMouse'),
         backgroundColor: Colors.blue,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.minimize),
+            onPressed: () => windowManager.hide(),
+            tooltip: 'Minimize to system tray',
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

@@ -1,5 +1,5 @@
-name: remote_mouse_server
-description: Remote Mouse Flutter server for Windows
+name: win_mouse
+description: WinMouse - Remote Mouse Control for Windows
 publish_to: "none"
 
 environment:
@@ -12,9 +12,13 @@ dependencies:
   qr_flutter: ^4.1.0
   clipboard: ^0.1.3
   window_manager: ^0.4.2
+  system_tray: ^2.0.3
 
 dev_dependencies:
   test: ^1.25.2
 
 flutter:
   uses-material-design: true
+  
+  assets:
+    - assets/
